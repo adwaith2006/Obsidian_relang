@@ -1456,6 +1456,40 @@ def main(stdscr):
         sleep_time = max(0.001, tick_delay - elapsed)
         time.sleep(sleep_time)
 
+def run_curses(main_func):
+    stdscr = curses.initscr()
+    try:
+        try:
+            curses.noecho()
+        except Exception:
+            pass
+        try:
+            curses.cbreak()
+        except Exception:
+            pass
+        try:
+            stdscr.keypad(True)
+        except Exception:
+            pass
+        main_func(stdscr)
+    finally:
+        try:
+            stdscr.keypad(False)
+        except Exception:
+            pass
+        try:
+            curses.echo()
+        except Exception:
+            pass
+        try:
+            curses.nocbreak()
+        except Exception:
+            pass
+        try:
+            curses.endwin()
+        except Exception:
+            pass
+
 if __name__ == '__main__':
     def signal_handler(sig, frame):
         sys.exit(0)
@@ -1463,6 +1497,6 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
 
     try:
-        curses.wrapper(main)
+        run_curses(main)
     except KeyboardInterrupt:
         sys.exit(0)
