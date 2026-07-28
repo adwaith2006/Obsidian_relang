@@ -1,0 +1,183 @@
+HEALTHCHECKS — WORK LOG
+======================
+Date: 2026-07-28
+Agent: Antigravity (Gemini)
+
+=======================================================================
+WHAT HAS BEEN DONE
+=======================================================================
+
+PHASE: SPECIFICATION / REVERSE ENGINEERING (COMPLETE)
+------------------------------------------------------
+
+Goal: Reverse-engineer the full application behaviour from the 134 HTTP
+      replay test cases WITHOUT looking at source/ code.
+
+Steps taken:
+
+1. EXPLORED THE REPO STRUCTURE
+   - Read relang/tester.py to understand how the HTTP replay engine works:
+     * It sends each step's HTTP request to the running server
+     * It stores cookies (csrftoken, sessionid) between steps via storeCookies
+     * It extracts values from JSON responses via store (JSONPath e.g. $.uuid)
+     * It extracts values from HTML via storeHtml (regex patterns)
+     * It normalises output (strips CSRF tokens, UUIDs, timestamps) before
+       comparing against expected hashes
+   - Confirmed 134 test input files in relang/input/
+   - Confirmed 134 matching expected output files in relang/output/
+
+2. CATALOGUED ALL 134 TEST FILES
+   Files are grouped by prefix:
+   - accounts_*.json (36 files) — authentication, profile, signup, logout
+   - api_*.json      (60 files) — REST API v1/v2/v3, ping endpoints
+   - front_*.json    (20 files) — browser/UI pages
+   - integrations_*.json (13 files) — notification channel setup
+   - payments_*.json (5 files)  — billing and pricing
+
+3. READ EVERY SINGLE TEST FILE (inputs + outputs)
+   For each test file, extracted:
+   - HTTP method and path for every step
+   - Request headers (especially X-Api-Key, content-type)
+   - Request body (form-urlencoded and JSON)
+   - Expected HTTP status code
+   - Actual response body from output files (full JSON/HTML/text)
+   - storeCookies directives (which cookies to carry forward)
+   - store directives (JSONPath extractions from responses)
+   - storeHtml directives (regex extractions from HTML responses)
+
+4. BUILT THE COMPLETE SPECIFICATION
+   Wrote target/SPEC.md (~30KB) covering:
+
+   a) Authentication & Session Model
+      - Standard login flow (3 steps: GET login -> POST login -> protected page)
+      - Session cookie: sessionid
+      - Test users: alice@example.org / password
+      - Sudo mode for sensitive pages (change_email, set_password)
+      - Login action parameter (login vs magic-link)
+      - Remember-me persistent session
+      - ?next= redirect after login
+
+   b) CSRF Protection Rules
+      - 17 endpoints that require CSRF token
+      - 6 endpoint categories that do NOT use CSRF
+      - How CSRF token is obtained (cookie method vs HTML extraction method)
+      - Signup CSRF endpoint: GET /accounts/signup/csrf/
+
+   c) Cookie Specification
+      - csrftoken: set by any form page
+      - sessionid: set by successful POST /accounts/login/
+
+   d) API Authentication
+      - Header: X-Api-Key: <exactly 32 alphanumeric characters>
+      - 401 {"error": "missing api key"} — missing header, wrong header name,
+        special chars in key, wrong key length
+      - 401 {"error": "wrong api key"} — valid format but unknown key
+      - Fixture keys documented (32 X's = full access, 22 p's = ping key)
+
+   e) Complete Endpoint Catalogue (60+ endpoints)
+      - Accounts/Auth: login, logout, signup, profile, notifications,
+        appearance, billing, change_email, set_password, close_account,
+        transfer, verify_email, unsubscribe (alerts + reports), add_webauthn
+      - API v1: GET/POST /checks/, GET/POST/DELETE /checks/<uuid>,
+        OPTIONS /checks/<uuid>, pings/, pings/<n>/body, pause, resume,
+        channels/, badges/, badge SVG, bounces/, notifications/status/
+      - API v2: POST /checks/
+      - API v3: POST/GET /checks/ (with slug), GET /checks/<slug>
+      - Ping: GET/POST/HEAD /ping/<uuid>, /ping/<uuid>/fail,
+        /ping/<uuid>/start, /ping/<uuid>/<exit>, slug-based pings
+      - Front-end: /, /projects/<uuid>/, /checks/<uuid>/details/,
+        log_events/, pings/<n>/, filtering_rules/, pause/, resume/,
+        transfer/, update_name/, uncloak/, /channels/<uuid>/edit/,
+        /docs/*, /pricing/, /docs/search/
+      - Integrations: add_email, add_webhook, add_slack, add_googlechat,
+        add_mattermost, add_msteams, add_prometheus, add_zulip, add_signal,
+        add_group (all under /projects/<uuid>/), /projects/<uuid>/channels/
+      - Payments: /pricing/, /accounts/profile/billing/
+
+   f) Check JSON Schema (all 25 fields)
+      badge_url, channels, desc, failure_kw, filter_body, filter_default_fail,
+      filter_http_body, filter_subject, grace, last_ping, manual_resume,
+      methods, n_pings, name, next_ping, pause_url, ping_url, resume_url,
+      slug, start_kw, started, status, subject, subject_fail, success_kw,
+      tags, timeout, update_url, uuid
+
+   g) Validation Rules
+      - timeout: integer, minimum 60 (boundary tested), null rejected
+      - slug: max 100 characters
+      - schedule: must be valid cron/OnCalendar expression
+      - methods: must be valid HTTP method names
+      - exit_status in URL: 0-255 (>255 returns 400)
+      - unique=[]: empty array always creates new check
+      - Extra/unknown JSON fields: silently ignored (returns 201)
+      - desc=null: accepted
+      - Timezone legacy names auto-converted (UCT -> UTC)
+
+   h) Entity Model
+      Project, Check, Ping, Channel, User/Profile — all fields documented
+
+   i) 7 Workflow Diagrams
+      Standard login, create+ping via API, slug-based ping, integration setup,
+      filtering rules setup, pause/resume UI, unique field dedup
+
+   j) Error Response Formats
+      JSON error strings, full HTTP status code table (200-405)
+
+   k) 9-Phase Prioritised Implementation Roadmap
+      Phase 1: Core auth (blocks everything)
+      Phase 2: API key + check CRUD (~60% of tests)
+      Phase 3: Ping endpoints
+      Phase 4: API supplementary (pings list, body, channels, badges)
+      Phase 5: API v3 (slug field)
+      Phase 6: Front-end UI pages
+      Phase 7: Account management
+      Phase 8: Integrations
+      Phase 9: Payments & billing
+
+5. CREATED HELPER SCRIPT
+   target/read_spec.py — reads all 134 test files from relang/ (read-only)
+   and prints every step with its full request, response, and state
+   operations. Run with: python target/read_spec.py
+
+=======================================================================
+CURRENT STATE OF target/
+=======================================================================
+
+target/SPEC.md        — Complete specification (primary deliverable)
+target/read_spec.py   — Helper: prints all 134 test cases
+target/spec_raw.txt   — Raw dump from read_spec.py (reference)
+target/.gitkeep       — Pre-existing placeholder
+
+=======================================================================
+WHAT HAS NOT BEEN DONE YET
+=======================================================================
+
+- NO web server implementation exists yet
+- NO database schema implemented
+- NO routes/handlers written
+- NO tests passing
+
+The next step is to implement the actual web server in target/ using
+Python (FastAPI or Flask) — NOT Django — targeting port 8011, using
+SQLite for persistence, implementing all endpoints from SPEC.md in
+the order of the 9-phase roadmap.
+
+=======================================================================
+KEY FACTS FOR THE NEXT IMPLEMENTOR
+=======================================================================
+
+- Server must run on port 8011 (confirmed from badge_url in test outputs)
+- Fresh SQLite DB is fine — tests create their own state per run
+- alice@example.org / password must exist as a fixture user
+- API key XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX (32 X's) must work for alice
+- Ping key pppppppppppppppppppppp (22 p's) must work for slug pings
+- Slug auto-generation: "My Check" -> "my-check", "API Pause" -> "api-pause"
+- Slug regenerates when name is updated via POST /api/v1/checks/<uuid>
+- CSRF token must be a real token stored server-side (Django-style double submit)
+- Check status values: "new", "up", "down", "paused"
+- All JSON responses must have Content-Type: application/json
+- Ping body retrieval (/pings/<n>/body) returns Content-Type: text/plain
+- PATCH and PUT on /api/v1/checks/ must return 405
+- OPTIONS on /api/v1/checks/<uuid> must return 204
+- unique=[] (empty list) always creates a new check (201)
+- Disabled integrations return 404 (e.g. trello)
+- /projects/<uuid>/channels/ returns 404 when no channels exist (path confirmed)

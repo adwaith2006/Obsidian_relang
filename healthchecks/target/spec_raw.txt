@@ -1,0 +1,1092 @@
+﻿=== accounts_get_accountssignupcsrf_returns_csrf_token ===
+  STEP 1: GET /accounts/signup/csrf/ -> 200
+
+=== accounts_get_add_webauthn_page_without_auth_redirects_to_login_2 ===
+  STEP 1: GET /accounts/two_factor/webauthn/ -> 302
+
+=== accounts_get_change_email_when_logged_in_shows_sudo_prompt ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'sessionId': 'sessionid'}
+  STEP 3: GET /accounts/change_email/ -> 200
+
+=== accounts_get_change_email_without_login_redirects ===
+  STEP 1: GET /accounts/change_email/ -> 302
+
+=== accounts_get_close_account_when_logged_in_shows_page ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'sessionId': 'sessionid'}
+  STEP 3: GET /accounts/close/ -> 200
+
+=== accounts_get_close_account_without_login_redirects ===
+  STEP 1: GET /accounts/close/ -> 302
+
+=== accounts_get_login_with_redirect_to_project_checks ===
+  STEP 1: GET /accounts/login/?next=/projects/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/?next=/projects/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_get_profile_page_with_password_section_visible ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET /accounts/profile/ -> 200
+
+=== accounts_get_profile_sets_theme_preference_session ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: POST /accounts/profile/appearance/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: theme=dark&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_get_profile_when_logged_in_returns_200_2 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET /accounts/profile/ -> 200
+
+=== accounts_get_set_password_when_logged_in_shows_sudo_prompt ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET /accounts/set_password/ -> 200
+
+=== accounts_get_set_password_without_login_redirects ===
+  STEP 1: GET /accounts/set_password/ -> 302
+
+=== accounts_get_signup_csrf_endpoint_returns_200 ===
+  STEP 1: GET /accounts/signup/csrf/ -> 200
+
+=== accounts_get_signup_while_logged_in_redirects_or_shows_error ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET /accounts/signup/ -> 405
+
+=== accounts_get_unsubscribe_alerts_with_invalid_token ===
+  STEP 1: GET /accounts/unsubscribe_alerts/bad-token/ -> 404
+
+=== accounts_get_unsubscribe_reports_with_invalid_token ===
+  STEP 1: GET /accounts/unsubscribe_reports/bad-token/ -> 200
+
+=== accounts_get_verify_email_with_invalid_token_shows_error ===
+  STEP 1: GET /accounts/change_email/invalid-token-here/ -> 200
+
+=== accounts_get_verify_email_with_malformed_token_shows_error ===
+  STEP 1: GET /accounts/change_email/not-valid-base64/ -> 200
+
+=== accounts_login_with_invalid_email_shows_error ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=nonexistent%40example.org&password=password&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_login_with_next_to_a_different_project_redirects_to_that_project ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/?next=/api/v1/checks/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_change_email_with_invalid_email_rejected ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET /accounts/change_email/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 4: POST /accounts/change_email/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: email=not-an-email&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_login_with_empty_email_returns_form ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=&password=password&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_login_with_empty_email_returns_form_error ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=&password=password&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_login_with_empty_password_returns_form_error ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_login_with_remember_me_sets_persistent_session ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_login_with_username_instead_of_email ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice&password=password&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_login_without_action_parameter_uses_magic_form ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_logout_with_csrf_redirects_to_index ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/logout/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_notifications_update_report_frequency ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: POST /accounts/profile/notifications/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: reports=daily&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_remove_without_csrf_returns_403 ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'rCsrf': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={rCsrf}
+    storeCookies: {'rSess': 'sessionid'}
+  STEP 3: GET / -> 200
+    storeHtml: {'rProjId': '/projects/([0-9a-f-]+)/'}
+  STEP 4: POST /projects/{rProjId}/remove/ -> 403
+
+=== accounts_post_set_password_with_short_password_returns_form ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'sessionId': 'sessionid'}
+  STEP 3: GET /accounts/set_password/ -> 200
+    storeHtml: {'spCsrf': 'csrfmiddlewaretoken" value="([^"]+)"'}
+  STEP 4: POST /accounts/set_password/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: csrfmiddlewaretoken={spCsrf}&current_password=password&password=short&password2=short
+
+=== accounts_post_signup_with_existing_email_returns_form ===
+  STEP 1: GET /accounts/signup/csrf/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/signup/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: identity=alice@example.org&csrfmiddlewaretoken={csrfToken}
+
+=== accounts_post_signup_without_csrf_returns_403 ===
+  STEP 1: POST /accounts/signup/ -> 403
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: identity=newuser%40example.org&password=password1
+
+=== accounts_post_signup_without_csrf_returns_403_2 ===
+  STEP 1: POST /accounts/signup/ -> 403
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: identity=newuser@example.org
+
+=== accounts_post_transfer_on_settings_without_login_returns_403 ===
+  STEP 1: POST /projects/00000000-0000-0000-0000-000000000000/settings/ -> 403
+
+=== accounts_post_transfer_without_csrf_returns_403 ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'tpCsrf': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={tpCsrf}
+    storeCookies: {'tpSess': 'sessionid'}
+  STEP 3: GET / -> 200
+    storeHtml: {'tpProjId': '/projects/([0-9a-f-]+)/'}
+  STEP 4: POST /projects/{tpProjId}/settings/ -> 403
+
+=== api_api_v3_list_checks_returns_slug_field ===
+  STEP 1: POST /api/v3/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"V3 Slug","slug":"v3-test","timeout":3600,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "V3 Slug", "next_ping": null, "pause_url": "http://localhost:8011/api/v3/checks/<UUID>/pause", "ping_ur
+  STEP 2: GET /api/v3/checks/ -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"checks": [{"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "V3 Slug", "next_ping": null, "pause_url": "http://localhost:8011/api/v3/checks/<UUID>/paus
+
+=== api_create_check_with_both_filters_accepted ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Both Filters","filter_subject":true,"filter_body":true,"timeout":3600,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": true, "filter_default_fail": false, "filter_http_body": false, "filter_subject": true, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Both Filters", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping
+
+=== api_create_check_with_filter_body_accepted ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Filter Body","filter_body":true,"timeout":3600,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": true, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Filter Body", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping
+
+=== api_create_check_with_invalid_methods_returns_400 ===
+  STEP 1: POST /api/v1/checks/ -> 400
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Bad Methods","methods":"INVALID","timeout":3600,"grace":60}
+    OUT ct=application/json body={"error": "json validation error: methods has unexpected value"}
+
+=== api_create_check_with_schedule_timezone_americanew_york ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"EST Check","schedule":"0 9 * * *","tz":"America/New_York","grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "EST Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_
+
+=== api_create_check_with_slug_at_max_length ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Max Slug","slug":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","timeout":3600,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Max Slug", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_u
+
+=== api_create_check_with_timeout_at_boundary_min_60 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Min Timeout","timeout":60,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Min Timeout", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "pin
+
+=== api_create_check_with_timeout_at_minimum_boundary ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Min Timeout","timeout":60,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Min Timeout", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "pin
+
+=== api_create_check_with_timeout_just_below_min_returns_400 ===
+  STEP 1: POST /api/v1/checks/ -> 400
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Below Min","timeout":59,"grace":60}
+    OUT ct=application/json body={"error": "json validation error: timeout is too small"}
+
+=== api_create_with_empty_unique_array_creates_new_check ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"First","timeout":3600,"grace":60}
+    store: {'emptyUniqId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "First", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_url"
+  STEP 2: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"First","timeout":3600,"grace":60,"unique":[]}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "First", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_url"
+
+=== api_create_with_extra_unknown_field_returns_201 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Extra Field","timeout":3600,"grace":60,"foo":"bar"}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Extra Field", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "pin
+
+=== api_create_with_legacy_timezone_conversion ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Legacy TZ","schedule":"*/5 * * * *","tz":"Europe/Kiev","grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Legacy TZ", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_
+
+=== api_create_with_non_numeric_timeout_returns_400 ===
+  STEP 1: POST /api/v1/checks/ -> 400
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Test","timeout":"not-a-number","grace":60}
+    OUT ct=application/json body={"error": "json validation error: timeout is not a number"}
+
+=== api_create_with_null_desc_is_accepted ===
+  STEP 1: POST /api/v1/checks/ -> 400
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Null Desc","timeout":3600,"grace":60,"desc":null}
+    OUT ct=application/json body={"error": "json validation error: desc is not a string"}
+
+=== api_create_with_slug_in_v3_then_lookup_by_slug ===
+  STEP 1: POST /api/v3/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Slug Lookup","slug":"lookup-me","timeout":3600,"grace":60}
+    store: {'slugLookupId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Slug Lookup", "next_ping": null, "pause_url": "http://localhost:8011/api/v3/checks/<UUID>/pause", "pin
+  STEP 2: GET /api/v1/checks/?slug=lookup-me -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"checks": [{"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Slug Lookup", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/
+
+=== api_create_with_uct_timezone_conversion ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"UCT TZ","schedule":"*/5 * * * *","tz":"UCT","grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "UCT TZ", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_url
+
+=== api_create_with_unique_name_returns_existing_check ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Unique Name Check","timeout":3600,"grace":60}
+    store: {'unameId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Unique Name Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause"
+  STEP 2: POST /api/v1/checks/ -> 200
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Unique Name Check","timeout":3600,"grace":60,"unique":["name"]}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Unique Name Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause"
+
+=== api_create_with_unique_timeout_returns_existing_check ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"First","timeout":12345,"grace":60}
+    store: {'utoId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "First", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_url"
+  STEP 2: POST /api/v1/checks/ -> 200
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Second","timeout":12345,"grace":60,"unique":["timeout"]}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Second", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_url
+
+=== api_create_with_wrong_api_key_returns_401 ===
+  STEP 1: POST /api/v1/checks/ -> 401
+    headers: {'content-type': 'application/json', 'x-api-key': 'wrong-key-here-32-chars!!'}
+    body: {"name":"Wrong Key","timeout":3600,"grace":60}
+    OUT ct=application/json body={"error": "missing api key"}
+
+=== api_delete_already_deleted_check_returns_404 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Double Delete","timeout":3600,"grace":60}
+    store: {'del2Id': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Double Delete", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "p
+  STEP 2: DELETE /api/v1/checks/{del2Id} -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Double Delete", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "p
+  STEP 3: DELETE /api/v1/checks/{del2Id} -> 404
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+
+=== api_filter_by_tag_with_special_characters ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Tagged Check","tags":"test-tag_123","timeout":3600,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Tagged Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "pi
+  STEP 2: GET /api/v1/checks/?tag=test-tag_123 -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"checks": [{"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Tagged Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>
+
+=== api_get_apiv1checks_with_empty_tag_param_returns_200 ===
+  STEP 1: GET /api/v1/checks/?tag= -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"checks": []}
+
+=== api_get_badge_with_invalid_badge_key_returns_404 ===
+  STEP 1: GET /badge/nonexistent/0000000000000000000000000000000000000000/test-tag.svg -> 404
+
+=== api_get_check_by_nonexistent_uuid_returns_404 ===
+  STEP 1: GET /api/v1/checks/00000000-0000-0000-0000-000000000000 -> 404
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+
+=== api_get_check_by_uuid_after_delete_returns_404 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Gone Check","timeout":3600,"grace":60}
+    store: {'gcId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Gone Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping
+  STEP 2: DELETE /api/v1/checks/{gcId} -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Gone Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping
+  STEP 3: GET /api/v1/checks/{gcId} -> 404
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+
+=== api_get_checks_with_wrong_header_name_x_apikey_returns_401 ===
+  STEP 1: GET /api/v1/checks/ -> 401
+    headers: {'x-apikey': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"error": "missing api key"}
+
+=== api_get_checks_without_auth_header_returns_401 ===
+  STEP 1: GET /api/v1/checks/ -> 401
+    OUT ct=application/json body={"error": "missing api key"}
+
+=== api_get_non_existent_uuid_returns_404 ===
+  STEP 1: GET /api/v1/checks/00000000-0000-0000-0000-000000000000 -> 404
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+
+=== api_get_ping_body_returns_content ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Body Content","timeout":3600,"grace":60}
+    store: {'bdyChkId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Body Content", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "pi
+  STEP 2: POST /ping/{bdyChkId} -> 200
+    body: ping body content here
+  STEP 3: GET /api/v1/checks/{bdyChkId}/pings/1/body -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=text/plain body=ping body content here
+
+=== api_get_ping_body_without_api_key_returns_401 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Auth Body","timeout":3600,"grace":60}
+    store: {'authBdyId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Auth Body", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_
+  STEP 2: POST /ping/{authBdyId} -> 200
+    body: auth check body
+  STEP 3: GET /api/v1/checks/{authBdyId}/pings/1/body -> 401
+    OUT ct=application/json body={"error": "missing api key"}
+
+=== api_get_pings_before_any_ping_returns_empty_list ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"No Pings Yet","timeout":3600,"grace":60}
+    store: {'ns2_id5': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "No Pings Yet", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "pi
+  STEP 2: GET /api/v1/checks/{ns2_id5}/pings/ -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"pings": []}
+
+=== api_get_pings_for_nonexistent_check_returns_404 ===
+  STEP 1: GET /api/v1/checks/00000000-0000-0000-0000-000000000000/pings/ -> 404
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+
+=== api_head_ping_returns_200 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"HEAD Ping","timeout":3600,"grace":60}
+    store: {'headPingId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "HEAD Ping", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_
+  STEP 2: HEAD /ping/{headPingId} -> 200
+
+=== api_list_badges_without_api_key_returns_401 ===
+  STEP 1: GET /api/v1/badges/ -> 401
+    OUT ct=application/json body={"error": "missing api key"}
+
+=== api_list_channels_returns_channel_kind_strings ===
+  STEP 1: GET /api/v1/channels/ -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"channels": []}
+
+=== api_list_checks_with_api_key_containing_special_chars ===
+  STEP 1: GET /api/v1/checks/ -> 401
+    headers: {'x-api-key': 'ABC!@#$%^&*()_+=-01'}
+    OUT ct=application/json body={"error": "missing api key"}
+
+=== api_list_checks_with_wrong_api_key_length_33 ===
+  STEP 1: GET /api/v1/checks/ -> 401
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"error": "missing api key"}
+
+=== api_list_pings_for_check_returns_empty ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Ping List","timeout":3600,"grace":60}
+    store: {'plistId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Ping List", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_
+  STEP 2: GET /api/v1/checks/{plistId}/pings/ -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"pings": []}
+
+=== api_list_pings_with_readonly_key_returns_401 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"RO Ping Check","timeout":3600,"grace":60}
+    store: {'roPingCheckId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "RO Ping Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "p
+  STEP 2: GET /api/v1/checks/{roPingCheckId}/pings/ -> 401
+    headers: {'x-api-key': 'RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR'}
+    OUT ct=application/json body={"error": "wrong api key"}
+
+=== api_options_on_single_check_returns_204 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Options Check","timeout":3600,"grace":60}
+    store: {'optCheckId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Options Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "p
+  STEP 2: OPTIONS /api/v1/checks/{optCheckId} -> 204
+
+=== api_patch_on_checks_list_returns_405 ===
+  STEP 1: PATCH /api/v1/checks/ -> 405
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+
+=== api_pause_check_by_uuid_returns_200 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"API Pause","timeout":3600,"grace":60}
+    store: {'apId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "API Pause", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_
+  STEP 2: POST /api/v1/checks/{apId}/pause -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "API Pause", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_
+
+=== api_ping_by_slug_with_exit_status ===
+  STEP 1: POST /api/v3/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Ping Exit","slug":"sc-ping-exit","timeout":3600,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Ping Exit", "next_ping": null, "pause_url": "http://localhost:8011/api/v3/checks/<UUID>/pause", "ping_
+  STEP 2: POST /ping/pppppppppppppppppppppp/sc-ping-exit/0 -> 200
+
+=== api_ping_check_by_slug_with_valid_ping_key ===
+  STEP 1: POST /api/v3/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Slug Check","slug":"sc-test-slug","timeout":3600,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Slug Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v3/checks/<UUID>/pause", "ping
+  STEP 2: POST /ping/pppppppppppppppppppppp/sc-test-slug -> 200
+
+=== api_ping_fail_sets_status_to_down ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Fail Ping","timeout":3600,"grace":60}
+    store: {'failPingId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Fail Ping", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_
+  STEP 2: POST /ping/{failPingId}/fail -> 200
+
+=== api_ping_start_on_nonexistent_check_returns_404 ===
+  STEP 1: POST /ping/00000000-0000-0000-0000-000000000000/start -> 404
+
+=== api_ping_with_exit_status_256_returns_400 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Exit 256","timeout":3600,"grace":60}
+    store: {'exit256Id': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Exit 256", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_u
+  STEP 2: POST /ping/{exit256Id}/256 -> 400
+
+=== api_ping_with_malformed_uuid_returns_400 ===
+  STEP 1: POST /ping/not-a-uuid -> 404
+
+=== api_ping_with_no_body ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"No Body Ping","timeout":3600,"grace":60}
+    store: {'noBodyPingId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "No Body Ping", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "pi
+  STEP 2: POST /ping/{noBodyPingId} -> 200
+
+=== api_post_bounce_with_valid_signing ===
+  STEP 1: POST /api/v1/bounces/ -> 200
+    headers: {'content-type': 'application/json'}
+    body: {"signed":true,"type":"Bounce"}
+
+=== api_post_create_check_with_invalidoncalendar_schedule_returns_400 ===
+  STEP 1: POST /api/v1/checks/ -> 400
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Invalid OnCal","schedule":"invalid.oncalendar","timeout":3600,"grace":60}
+    OUT ct=application/json body={"error": "json validation error: schedule is not a valid cron or OnCalendar expression"}
+
+=== api_post_notification_status_with_both_id_and_status ===
+  STEP 1: POST /api/v1/notifications/status/ -> 404
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"status":"delivered"}
+
+=== api_put_on_checks_list_returns_405 ===
+  STEP 1: PUT /api/v1/checks/ -> 405
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+
+=== api_slug_101_chars_400 ===
+  STEP 1: POST /api/v1/checks/ -> 400
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Test","slug":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","timeout":3600,"grace":60}
+    OUT ct=application/json body={"error": "json validation error: slug is too long"}
+
+=== api_slug_ping_with_exit_status_0 ===
+  STEP 1: POST /api/v3/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Slug Exit0","slug":"slug-exit0","timeout":3600,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Slug Exit0", "next_ping": null, "pause_url": "http://localhost:8011/api/v3/checks/<UUID>/pause", "ping
+  STEP 2: POST /ping/pppppppppppppppppppppp/slug-exit0/0 -> 200
+
+=== api_update_check_name_triggers_slug_regeneration ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Slug Update","timeout":3600,"grace":60}
+    store: {'ns2_id3': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Slug Update", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "pin
+  STEP 2: POST /api/v1/checks/{ns2_id3} -> 200
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Renamed Again"}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Renamed Again", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "p
+  STEP 3: GET /api/v1/checks/{ns2_id3} -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Renamed Again", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "p
+
+=== api_update_check_with_name_only_preserves_timeout_and_grace ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Original","timeout":3600,"grace":60}
+    store: {'ns2_id2': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Original", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_u
+  STEP 2: POST /api/v1/checks/{ns2_id2} -> 200
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Renamed"}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Renamed", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_ur
+  STEP 3: GET /api/v1/checks/{ns2_id2} -> 200
+    headers: {'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Renamed", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_ur
+
+=== api_update_with_non_numeric_timeout_returns_400 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Update Bad Type","timeout":3600,"grace":60}
+    store: {'ubtId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Update Bad Type", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", 
+  STEP 2: POST /api/v1/checks/{ubtId} -> 400
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"timeout":"not-a-number"}
+    OUT ct=application/json body={"error": "json validation error: timeout is not a number"}
+
+=== api_update_with_null_timeout_returns_400 ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Update Null Timeout","timeout":3600,"grace":60}
+    store: {'untId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Update Null Timeout", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/paus
+  STEP 2: POST /api/v1/checks/{untId} -> 400
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"timeout":null}
+    OUT ct=application/json body={"error": "json validation error: timeout is not a number"}
+
+=== api_v2_api_create_returns_201 ===
+  STEP 1: POST /api/v2/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"V2 Check","timeout":3600,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "V2 Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v2/checks/<UUID>/pause", "ping_u
+
+=== api_v3_create_accepts_custom_slug ===
+  STEP 1: POST /api/v3/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"V3 Slug","slug":"custom-slug-v3","timeout":3600,"grace":60}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "V3 Slug", "next_ping": null, "pause_url": "http://localhost:8011/api/v3/checks/<UUID>/pause", "ping_ur
+
+=== front_get_check_details_shows_tags_when_present ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Tagged Check","tags":"frontend,prod","timeout":3600,"grace":60}
+    store: {'tgId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Tagged Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "pi
+  STEP 2: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 4: GET /checks/{tgId}/details/ -> 200
+
+=== front_get_check_details_shows_timeout_and_grace_values ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Detail View","timeout":7200,"grace":300}
+    store: {'dvId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 300, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Detail View", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "pi
+  STEP 2: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 4: GET /checks/{dvId}/details/ -> 200
+
+=== front_get_details_page_for_check_with_no_tags_shows_empty_tags ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"No Tags","timeout":3600,"grace":60}
+    store: {'ntId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "No Tags", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_ur
+  STEP 2: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 4: GET /checks/{ntId}/details/ -> 200
+
+=== front_get_docs_signals_page ===
+  STEP 1: GET /docs/signals/ -> 404
+
+=== front_get_docsapi_returns_api_documentation ===
+  STEP 1: GET /docs/api/ -> 200
+
+=== front_get_docscron_returns_200 ===
+  STEP 1: GET /docs/cron/ -> 200
+
+=== front_get_edit_page_for_nonexistent_channel_returns_404 ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'eCsrf': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={eCsrf}
+    storeCookies: {'eSess': 'sessionid'}
+  STEP 3: GET /integrations/00000000-0000-0000-0000-000000000000/edit/ -> 404
+
+=== front_get_log_events_after_login_returns_200 ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'leCsrf': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={leCsrf}
+    storeCookies: {'leSess': 'sessionid'}
+  STEP 3: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Log Events","timeout":3600,"grace":60}
+    store: {'leCheckId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Log Events", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping
+  STEP 4: GET /checks/{leCheckId}/log_events/ -> 200
+
+=== front_get_log_page_with_no_pings_shows_empty_state ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'leCsrf': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={leCsrf}
+    storeCookies: {'leSess': 'sessionid'}
+  STEP 3: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Empty Log","timeout":3600,"grace":60}
+    store: {'leCheckId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Empty Log", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_
+  STEP 4: GET /checks/{leCheckId}/log/ -> 200
+
+=== front_get_ping_by_number_returns_200_after_pinging ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'pnCsrf': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={pnCsrf}
+    storeCookies: {'pnSess': 'sessionid'}
+  STEP 3: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Ping Num","timeout":3600,"grace":60}
+    store: {'pnCheckId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Ping Num", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_u
+  STEP 4: POST /ping/{pnCheckId} -> 200
+  STEP 5: GET /checks/{pnCheckId}/pings/1/ -> 200
+
+=== front_get_project_checks_without_login_redirects ===
+  STEP 1: GET /projects/00000000-0000-0000-0000-000000000000/checks/ -> 302
+
+=== front_get_uncloak_with_bad_key_returns_404_when_logged_in ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'uCsrf': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={uCsrf}
+    storeCookies: {'uSess': 'sessionid'}
+  STEP 3: GET /cloaked/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/ -> 404
+
+=== front_post_filtering_rules_with_keywords_redirects ===
+  STEP 1: GET /accounts/login/ -> ?
+    storeCookies: {'kwCsrf': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={kwCsrf}
+    storeCookies: {'kwSess': 'sessionid'}
+  STEP 3: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Keyword Check","timeout":3600,"grace":60}
+    store: {'kwCheckId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Keyword Check", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "p
+  STEP 4: GET /checks/{kwCheckId}/details/ -> 200
+    storeHtml: {'kwCsrfToken': 'csrfmiddlewaretoken" value="([^"]+)"'}
+  STEP 5: POST /checks/{kwCheckId}/filtering_rules/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: csrfmiddlewaretoken={kwCsrfToken}&filter_subject=on&filter_body=on&keywords=error+fail+critical
+
+=== front_post_pause_check_redirects ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Pause Me","timeout":3600,"grace":60}
+    store: {'pauseId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Pause Me", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_u
+  STEP 2: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 4: POST /checks/{pauseId}/pause/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: csrfmiddlewaretoken={csrfToken}
+
+=== front_post_resume_paused_check_redirects ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Resume Me","timeout":3600,"grace":60}
+    store: {'resumeId': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Resume Me", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping_
+  STEP 2: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 4: POST /checks/{resumeId}/pause/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: csrfmiddlewaretoken={csrfToken}
+  STEP 5: POST /checks/{resumeId}/resume/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: csrfmiddlewaretoken={csrfToken}
+
+=== front_post_search_docs_with_xss_attempt_sanitized ===
+  STEP 1: POST /docs/search/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: q=%3Cscript%3Ealert(1)%3C/script%3E
+
+=== front_post_transfer_to_member_bob_redirects ===
+  STEP 1: POST /api/v1/checks/ -> 201
+    headers: {'content-type': 'application/json', 'x-api-key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+    body: {"name":"Tfr To Bob","timeout":3600,"grace":60}
+    store: {'tfr2Id': '$.uuid'}
+    OUT ct=application/json body={"badge_url": "http://localhost:8011/b/2/<UUID>.svg", "channels": "", "desc": "", "failure_kw": "", "filter_body": false, "filter_default_fail": false, "filter_http_body": false, "filter_subject": false, "grace": 60, "last_ping": null, "manual_resume": false, "methods": "", "n_pings": 0, "name": "Tfr To Bob", "next_ping": null, "pause_url": "http://localhost:8011/api/v1/checks/<UUID>/pause", "ping
+  STEP 2: GET /accounts/login/ -> ?
+    storeCookies: {'tbCsrf': 'csrftoken'}
+  STEP 3: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={tbCsrf}
+    storeCookies: {'tbSess': 'sessionid'}
+  STEP 4: GET /checks/{tfr2Id}/transfer/ -> 200
+    storeHtml: {'tbCsrf': 'csrfmiddlewaretoken" value="([^"]+)"'}
+  STEP 5: POST /checks/{tfr2Id}/transfer/ -> 400
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: csrfmiddlewaretoken={tbCsrf}&action=transfer
+
+=== front_post_update_name_without_login_returns_403 ===
+  STEP 1: POST /checks/00000000-0000-0000-0000-000000000000/name/ -> 403
+
+=== integrations_add_channel_for_group_after_creating_other_channels ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'pcode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{pcode}/add_email/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 5: POST /projects/{pcode}/add_email/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: value=groupmember%40test.com&up=true&down=true&csrfmiddlewaretoken={csrfToken}
+  STEP 6: GET /projects/{pcode}/add_group/ -> 200
+
+=== integrations_add_channel_for_signal_with_down_only_notifications ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'pcode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{pcode}/add_signal/ -> 404
+
+=== integrations_add_channel_page_for_email_renders_with_correct_form ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'pcode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{pcode}/add_email/ -> 200
+
+=== integrations_add_page_renders_after_login_10 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'projectCode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{projectCode}/add_pagertree/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+
+=== integrations_add_page_renders_after_login_11 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'projectCode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{projectCode}/add_prometheus/ -> 200
+
+=== integrations_add_page_renders_after_login_17 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'projectCode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{projectCode}/add_zulip/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+
+=== integrations_add_page_renders_after_login_2 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'projectCode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{projectCode}/add_googlechat/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+
+=== integrations_add_page_renders_after_login_5 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'projectCode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{projectCode}/add_mattermost/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+
+=== integrations_add_page_renders_after_login_6 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'projectCode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{projectCode}/add_msteams/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+
+=== integrations_add_page_returns_404_when_disabled_11 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'projectCode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{projectCode}/add_trello/ -> 404
+
+=== integrations_get_add_webhook_form_returns_200_2 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'ec6_3uid': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{ec6_3uid}/add_webhook/ -> 200
+
+=== integrations_get_channels_list_returns_200 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'ec6_2uid': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{ec6_2uid}/channels/ -> 404
+
+=== integrations_post_with_both_urls_empty_shows_error ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'projectCode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{projectCode}/add_webhook/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 5: POST /projects/{projectCode}/add_webhook/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: url_down=&method_down=GET&url_up=&method_up=GET&csrfmiddlewaretoken={csrfToken}
+
+=== integrations_post_with_valid_data_creates_channel_and_redirects_2 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'projectCode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{projectCode}/add_slack/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 5: POST /projects/{projectCode}/add_slack/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: value=https://hooks.example.com/valid&csrfmiddlewaretoken={csrfToken}
+
+=== integrations_post_with_valid_data_creates_channel_and_redirects_3 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET / -> 200
+    storeHtml: {'projectCode': '/projects/([0-9a-f-]{36})/'}
+  STEP 4: GET /projects/{projectCode}/add_webhook/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 5: POST /projects/{projectCode}/add_webhook/ -> 200
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: url_down=https%3A%2F%2Fhook.example.com%2Fvalid&method_down=GET&csrfmiddlewaretoken={csrfToken}
+
+=== payments_get_billing_page_shows_payment_methods_section ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: GET /accounts/profile/billing/ -> 200
+
+=== payments_get_pricing_page_returns_200 ===
+  STEP 1: GET /pricing/ -> 200
+
+=== payments_post_accountslogin_with_alice_credentials_redirects ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+
+=== payments_post_billing_without_csrf_returns_403 ===
+  STEP 1: GET /accounts/login/ -> 200
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 2: POST /accounts/login/ -> 302
+    headers: {'content-type': 'application/x-www-form-urlencoded'}
+    body: action=login&email=alice@example.org&password=password&csrfmiddlewaretoken={csrfToken}
+    storeCookies: {'csrfToken': 'csrftoken'}
+  STEP 3: POST /accounts/profile/billing/ -> 403
+
