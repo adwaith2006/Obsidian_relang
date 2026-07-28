@@ -11,6 +11,7 @@ import argparse
 import sys
 import math
 
+# pyrefly: ignore [missing-import]
 from PIL import Image
 
 # 70-character gradient from densest (darkest) to lightest (space)
