@@ -203,24 +203,28 @@ def do_crypto_aead_unlock():
 # C struct crypto_aead_ctx layout: key[32] + counter[8] + nonce[8] = 48 bytes
 def do_crypto_aead_init_x():
     key=read_hex(); nonce=read_hex()
-    sub=chacha20_h(key,nonce[:16]); sn=b'\x00'*4+nonce[16:24]
-    print_hex(sub+(1).to_bytes(8,'little')+sn)
+    sub=chacha20_h(key,nonce[:16])
+    print_hex(sub + (0).to_bytes(8,'little') + nonce[16:24])
 
 def do_crypto_aead_init_djb():
     key=read_hex(); nonce=read_hex()
-    print_hex(key+(1).to_bytes(8,'little')+nonce)
+    print_hex(key + (0).to_bytes(8,'little') + nonce[:8])
 
 def do_crypto_aead_init_ietf():
     key=read_hex(); nonce=read_hex()
-    print_hex(key+(1).to_bytes(8,'little')+nonce)
+    ctr = load32_le(nonce[:4]) << 32
+    print_hex(key + ctr.to_bytes(8,'little') + nonce[4:12])
 
 def do_crypto_aead_write():
     key=read_hex(); nonce=read_hex(); ad=read_hex(); pt=read_hex()
-    sn=nonce[:12]
-    pkey=_chacha20_block(_init_ietf(key,sn,0))[:32]
-    ct,_=chacha20_ietf(pt,key,sn,1)
-    data=_pad16(ad)+_pad16(ct)+len(ad).to_bytes(8,'little')+len(ct).to_bytes(8,'little')
-    mac=poly1305(data,pkey)
+    # init_ietf:
+    ctx_key = key
+    ctx_ctr = load32_le(nonce[:4]) << 32
+    ctx_nonce = nonce[4:12]
+    # write:
+    auth_key, _ = chacha20_djb(bytes(64), ctx_key, ctx_nonce, ctx_ctr)
+    ct, _ = chacha20_djb(pt, ctx_key, ctx_nonce, ctx_ctr + 1)
+    mac = _mac(auth_key[:32], ad, ct)
     print_hex(ct); print_hex(mac)
 
 # ── BLAKE2b ───────────────────────────────────────────────────────────────────
@@ -533,38 +537,32 @@ def _sh(*parts):
     return h.digest()
 
 def _ed25519_kp(seed):
-    h=_sh(seed); b=bytearray(h[:32])
-    b[0]&=248; b[31]&=127; b[31]|=64
-    a=int.from_bytes(b,'little'); pk=_compress(_smul(_BASE,a))
-    return bytes(b)+pk, pk
+    a=_sh(seed[:32])
+    sc=bytearray(a[:32]); sc[0]&=248; sc[31]&=127; sc[31]|=64
+    pk=_compress(_smul(_BASE,int.from_bytes(sc,'little')))
+    return seed[:32]+pk, pk
 
-def _ed25519_sign(sk64,msg):
-    b=bytearray(sk64[:32]); b[0]&=248; b[31]&=127; b[31]|=64
-    a=int.from_bytes(b,'little'); pk=sk64[32:64]
-    # Need full hash of original sk bytes for nonce
-    # sk64[:32] IS the clamped scalar (lower half of h(seed)) stored by our kp fn
-    # But wait  we need h[32:] for nonce. We can't recover it from sk64.
-    # In our _ed25519_kp we store b (clamped scalar) NOT h[:32].
-    # Let's re-examine: the C code passes fat_sk = sk[0:32] + pk[32:64]
-    # where sk[0:32] is from _ed25519_key_pair output.
-    # Our _ed25519_kp returns bytes(b)+pk, so sk64[:32] = clamped scalar bytes.
-    # This differs from RFC: RFC nonce = SHA512(h[32:] || msg) where h=SHA512(seed).
-    # We can't recover h[32:] from the clamped scalar alone.
-    # Solution: treat sk64[:32] as the "nonce seed" directly (like Monocypher's approach).
-    # Generate nonce hash from the stored bytes + msg.
-    r=int.from_bytes(_sh(sk64[:32],msg),'little')%_Q
+def _ed25519_sign(sk64,msg,dom=b''):
+    a=_sh(sk64[:32])
+    sc=bytearray(a[:32]); sc[0]&=248; sc[31]&=127; sc[31]|=64
+    sc_val=int.from_bytes(sc,'little')
+    pk=sk64[32:64]
+    r_hash=_sh(dom,a[32:64],msg)
+    r=int.from_bytes(r_hash[:64],'little')%_Q
     R=_compress(_smul(_BASE,r))
-    k=int.from_bytes(_sh(R,pk,msg),'little')%_Q
-    S=(r+k*a)%_Q
+    h_hash=_sh(dom,R,pk,msg)
+    h=int.from_bytes(h_hash[:64],'little')%_Q
+    S=(r+h*sc_val)%_Q
     return R+S.to_bytes(32,'little')
 
-def _ed25519_chk(sig,pk,msg):
+def _ed25519_chk(sig,pk,msg,dom=b''):
     R=sig[:32]; S=int.from_bytes(sig[32:64],'little')
     if S>=_Q: return 0xff
     Rp=_decompress(R); Ap=_decompress(pk)
     if Rp is None or Ap is None: return 0xff
-    k=int.from_bytes(_sh(R,pk,msg),'little')%_Q
-    if _chk_eq(_smul(_BASE,S),_ed_add(Rp,_smul(Ap,k))): return 0
+    h_hash=_sh(dom,R,pk,msg)
+    h=int.from_bytes(h_hash[:64],'little')%_Q
+    if _chk_eq(_smul(_BASE,S),_ed_add(Rp,_smul(Ap,h))): return 0
     return 0xff
 
 def do_crypto_ed25519_key_pair():
@@ -578,27 +576,15 @@ def do_crypto_ed25519_check():
     sig=read_hex(); pk=read_hex(); msg=read_hex()
     sys.stdout.write(f"{_ed25519_chk(sig,pk,msg):02x}:\n")
 
-_ED25519_PH_PREFIX=b'SigEd25519 no Ed25519 collisions\x01\x00'
+_ED25519_PH_PREFIX=b'SigEd25519 no Ed25519 collisions\x01'
 
 def do_crypto_ed25519_ph_sign():
     sk=read_hex(); pk=read_hex(); hv=read_hex()
-    b=bytearray(sk[:32]); b[0]&=248; b[31]&=127; b[31]|=64
-    a=int.from_bytes(b,'little')
-    r=int.from_bytes(_sh(_ED25519_PH_PREFIX,sk[:32],hv),'little')%_Q
-    R=_compress(_smul(_BASE,r))
-    k=int.from_bytes(_sh(_ED25519_PH_PREFIX,R,pk,hv),'little')%_Q
-    S=(r+k*a)%_Q
-    print_hex(R+S.to_bytes(32,'little'))
+    print_hex(_ed25519_sign(sk[:32]+pk,hv,_ED25519_PH_PREFIX))
 
 def do_crypto_ed25519_ph_check():
     sig=read_hex(); pk=read_hex(); hv=read_hex()
-    R=sig[:32]; S=int.from_bytes(sig[32:64],'little')
-    if S>=_Q: sys.stdout.write("ff:\n"); return
-    Rp=_decompress(R); Ap=_decompress(pk)
-    if Rp is None or Ap is None: sys.stdout.write("ff:\n"); return
-    k=int.from_bytes(_sh(_ED25519_PH_PREFIX,R,pk,hv),'little')%_Q
-    rv=0 if _chk_eq(_smul(_BASE,S),_ed_add(Rp,_smul(Ap,k))) else 0xff
-    sys.stdout.write(f"{rv:02x}:\n")
+    sys.stdout.write(f"{_ed25519_chk(sig,pk,hv,_ED25519_PH_PREFIX):02x}:\n")
 
 # -- Elligator 2 ---------------------------------------------------------------
 
@@ -638,25 +624,40 @@ def do_crypto_elligator_rev():
 
 def do_crypto_elligator_key_pair():
     seed=read_hex()
-    sk=bytearray(seed[:32]); sk[0]&=248; sk[31]&=127; sk[31]|=64
-    k=int.from_bytes(sk,'little')
-    u=_ladder(_BU,k)
-    u_bytes=u.to_bytes(32,'little')
-    tweak=(seed[31]>>6)&0x3
-    A=_A25519; found=False
-    for xu in [u,(-u-A)%_P]:
-        if xu==0: continue
-        rhs=(-A*_finv(xu)-1)%_P; rhs=rhs*_finv(2)%_P
-        e=pow(rhs,(_P-1)//2,_P)
-        if e==0 or e==1:
-            r=_fsqrt(rhs)%_P
-            if r*r%_P!=rhs%_P: continue
-            if tweak&1: r=(-r)%_P
-            rb=bytearray(r.to_bytes(32,'little'))
-            rb[31]=(rb[31]&0x3f)|((tweak<<6)&0xc0)
-            print_hex(bytes(rb)); print_hex(bytes(sk)); found=True; break
-    if not found:
-        print_hex(bytes(32)); print_hex(bytes(sk))
+    buf=bytearray(64)
+    buf[32:64]=seed[:32]
+    A=_A25519
+    while True:
+        # buf[:64] = chacha20_djb(zero_64, key=buf[32:64], nonce=zero_8, counter=0)
+        out64, _ = chacha20_djb(bytes(64), buf[32:64], bytes(8), 0)
+        buf[:64] = out64
+        # pk = x25519_dirty_fast(sk=buf[:32])
+        sk_b = bytearray(buf[:32])
+        sk_b[0] &= 248; sk_b[31] &= 127; sk_b[31] |= 64
+        k = int.from_bytes(sk_b, 'little')
+        u = _ladder(_BU, k)
+
+        # test elligator_rev(hidden_out, pk=u, tweak=buf[32])
+        tweak = buf[32]
+        found = False
+        hidden_out = None
+        for xu in [u, (-u-A)%_P]:
+            if xu == 0: continue
+            rhs = (-A * _finv(xu) - 1) % _P; rhs = (rhs * _finv(2)) % _P
+            e = pow(rhs, (_P-1)//2, _P)
+            if e == 0 or e == 1:
+                r = _fsqrt(rhs) % _P
+                if r * r % _P != rhs % _P: continue
+                if tweak & 1: r = (-r) % _P
+                rb = bytearray(r.to_bytes(32, 'little'))
+                rb[31] = (rb[31] & 0x3f) | (tweak & 0xc0)
+                hidden_out = bytes(rb)
+                found = True
+                break
+        if found:
+            print_hex(hidden_out)
+            print_hex(bytes(buf[:32]))
+            break
 
 # -- Curve conversions ---------------------------------------------------------
 
