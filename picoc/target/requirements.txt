@@ -1,0 +1,2 @@
+# picoc Python 3 Migration Dependencies
+# Standard library only (no external packages required)
