@@ -1,0 +1,11 @@
+[package]
+name = "tclock"
+version = "1.0.0"
+edition = "2021"
+description = "Terminal clock with analog/digital modes, countdown, and tailing — Rust port"
+
+[dependencies]
+crossterm = { version = "0.28", features = ["event-stream"] }
+chrono = "0.4"
+clap = { version = "4.5", features = ["derive"] }
+ctrlc = "3.4"

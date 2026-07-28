@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Monocypher CLI — Python reimplementation.
 Reads function name + hex params from stdin, writes hex results to stdout.
@@ -45,13 +46,18 @@ def _ct_compare(a: bytes, b: bytes) -> int:
 
 def do_crypto_verify16():
     a=read_hex(); b=read_hex()
-    sys.stdout.write(f"{_ct_compare(a[:16],b[:16]):02x}:\n")
+    res = _ct_compare(a[:16], b[:16])
+    sys.stdout.write("00:\n" if res == 0 else "ffffffff:\n")
+
 def do_crypto_verify32():
     a=read_hex(); b=read_hex()
-    sys.stdout.write(f"{_ct_compare(a[:32],b[:32]):02x}:\n")
+    res = _ct_compare(a[:32], b[:32])
+    sys.stdout.write("00:\n" if res == 0 else "ffffffff:\n")
+
 def do_crypto_verify64():
     a=read_hex(); b=read_hex()
-    sys.stdout.write(f"{_ct_compare(a[:64],b[:64]):02x}:\n")
+    res = _ct_compare(a[:64], b[:64])
+    sys.stdout.write("00:\n" if res == 0 else "ffffffff:\n")
 def do_crypto_wipe():
     data=read_hex(); print_hex(bytes(len(data)))
 
@@ -178,16 +184,14 @@ def _mac(poly_key,ad,ct):
     return poly1305(data,poly_key)
 
 def aead_lock(pt,key,nonce,ad):
-    sub=chacha20_h(key,nonce[:16])
-    auth_key, _ = chacha20_djb(bytes(64),sub,nonce[16:24],0)
-    pkey=auth_key[:32]
-    ct,_=chacha20_djb(pt,sub,nonce[16:24],1)
+    sub=chacha20_h(key,nonce[:16]); sn=b'\x00'*4+nonce[16:24]
+    pkey=_chacha20_block(_init_djb(sub,sn,0))[:32]
+    ct,_=chacha20_djb(pt,sub,sn,1)
     return ct, _mac(pkey,ad,ct)
 
 def aead_unlock(ct,mac,key,nonce,ad):
-    sub=chacha20_h(key,nonce[:16])
-    auth_key, _ = chacha20_djb(bytes(64),sub,nonce[16:24],0)
-    pkey=auth_key[:32]
+    sub=chacha20_h(key,nonce[:16]); sn=b'\x00'*4+nonce[16:24]
+    pkey=_chacha20_block(_init_djb(sub,sn,0))[:32]
     if _ct_compare(mac,_mac(pkey,ad,ct))!=0: return b'',-1
     pt,_=chacha20_djb(ct,sub,nonce[16:24],1); return pt,0
 
@@ -202,25 +206,28 @@ def do_crypto_aead_unlock():
     sys.stdout.write(f"{'00' if r==0 else 'ff'}:\n")
 
 # AEAD streaming context
+# C struct crypto_aead_ctx layout: key[32] + counter[8] + nonce[8] = 48 bytes
 def do_crypto_aead_init_x():
     key=read_hex(); nonce=read_hex()
     sub=chacha20_h(key,nonce[:16])
-    print_hex(sub + (0).to_bytes(8,'little') + nonce[16:24])
+    print_hex((0).to_bytes(8,'little') + sub + nonce[16:24])
 
 def do_crypto_aead_init_djb():
     key=read_hex(); nonce=read_hex()
-    print_hex(key + (0).to_bytes(8,'little') + nonce[:8])
+    print_hex((0).to_bytes(8,'little') + key + nonce[:8])
 
 def do_crypto_aead_init_ietf():
     key=read_hex(); nonce=read_hex()
-    ctr = load32_le(nonce[:4]) << 32
-    print_hex(key + ctr.to_bytes(8,'little') + nonce[4:12])
+    ctr = (0).to_bytes(4,'little') + nonce[:4]
+    print_hex(ctr + key + nonce[4:12])
 
 def do_crypto_aead_write():
     key=read_hex(); nonce=read_hex(); ad=read_hex(); pt=read_hex()
+    # init_ietf:
     ctx_key = key
     ctx_ctr = load32_le(nonce[:4]) << 32
     ctx_nonce = nonce[4:12]
+    # write:
     auth_key, _ = chacha20_djb(bytes(64), ctx_key, ctx_nonce, ctx_ctr)
     ct, _ = chacha20_djb(pt, ctx_key, ctx_nonce, ctx_ctr + 1)
     mac = _mac(auth_key[:32], ad, ct)
