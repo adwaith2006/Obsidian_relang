@@ -1,0 +1,8 @@
+[package]
+name = "pipes"
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "pipes"
+path = "src/main.rs"
