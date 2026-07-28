@@ -135,7 +135,7 @@ def chacha20_h(key,inp):
 
 def chacha20_x(pt,key,nonce,ctr):
     sub=chacha20_h(key,nonce[:16])
-    nn=b'\x00'*8+nonce[16:24]
+    nn=nonce[16:24]
     return chacha20_djb(pt,sub,nn,ctr)
 
 def do_crypto_chacha20_h():
@@ -178,16 +178,18 @@ def _mac(poly_key,ad,ct):
     return poly1305(data,poly_key)
 
 def aead_lock(pt,key,nonce,ad):
-    sub=chacha20_h(key,nonce[:16]); sn=b'\x00'*4+nonce[16:24]
-    pkey=_chacha20_block(_init_djb(sub,sn,0))[:32]
-    ct,_=chacha20_djb(pt,sub,sn,1)
+    sub=chacha20_h(key,nonce[:16])
+    auth_key, _ = chacha20_djb(bytes(64),sub,nonce[16:24],0)
+    pkey=auth_key[:32]
+    ct,_=chacha20_djb(pt,sub,nonce[16:24],1)
     return ct, _mac(pkey,ad,ct)
 
 def aead_unlock(ct,mac,key,nonce,ad):
-    sub=chacha20_h(key,nonce[:16]); sn=b'\x00'*4+nonce[16:24]
-    pkey=_chacha20_block(_init_djb(sub,sn,0))[:32]
+    sub=chacha20_h(key,nonce[:16])
+    auth_key, _ = chacha20_djb(bytes(64),sub,nonce[16:24],0)
+    pkey=auth_key[:32]
     if _ct_compare(mac,_mac(pkey,ad,ct))!=0: return b'',-1
-    pt,_=chacha20_djb(ct,sub,sn,1); return pt,0
+    pt,_=chacha20_djb(ct,sub,nonce[16:24],1); return pt,0
 
 def do_crypto_aead_lock():
     key=read_hex(); nonce=read_hex(); ad=read_hex(); pt=read_hex()
@@ -200,7 +202,6 @@ def do_crypto_aead_unlock():
     sys.stdout.write(f"{'00' if r==0 else 'ff'}:\n")
 
 # AEAD streaming context
-# C struct crypto_aead_ctx layout: key[32] + counter[8] + nonce[8] = 48 bytes
 def do_crypto_aead_init_x():
     key=read_hex(); nonce=read_hex()
     sub=chacha20_h(key,nonce[:16])
@@ -217,11 +218,9 @@ def do_crypto_aead_init_ietf():
 
 def do_crypto_aead_write():
     key=read_hex(); nonce=read_hex(); ad=read_hex(); pt=read_hex()
-    # init_ietf:
     ctx_key = key
     ctx_ctr = load32_le(nonce[:4]) << 32
     ctx_nonce = nonce[4:12]
-    # write:
     auth_key, _ = chacha20_djb(bytes(64), ctx_key, ctx_nonce, ctx_ctr)
     ct, _ = chacha20_djb(pt, ctx_key, ctx_nonce, ctx_ctr + 1)
     mac = _mac(auth_key[:32], ad, ct)
@@ -261,7 +260,8 @@ def do_crypto_sha512_hkdf():
     while len(okm)<okm_size:
         prev=_hmac512(prk,prev+info+bytes([i])); okm+=prev; i+=1
     print_hex(okm[:okm_size])
-# -- Argon2 --------------------------------------------------------------------
+
+# ── Argon2 ────────────────────────────────────────────────────────────────────
 
 ARGON2_VERSION = 0x13
 _U64 = (1<<64)-1
@@ -357,7 +357,7 @@ def do_crypto_argon2():
     print_hex(crypto_argon2(len(hp),pw,salt,key,ad,
         load32_le(algo_b),load32_le(blk_b),load32_le(pass_b),load32_le(lane_b)))
 
-# -- X25519 / Curve25519 -------------------------------------------------------
+# ── X25519 / Curve25519 ───────────────────────────────────────────────────────
 
 _P = (1<<255)-19
 
@@ -408,11 +408,11 @@ def do_crypto_x25519_dirty_fast():
     k&=~7; k|=(1<<254)
     print_hex(_ladder(_BU,k).to_bytes(32,'little'))
 
-# -- Edwards curve (Ed25519 / EdDSA) ------------------------------------------
+# ── Edwards curve (Ed25519 / EdDSA) ──────────────────────────────────────────
 
 _Q=2**252+27742317777372353535851937790883648493
-_GX=15112221349535807912866137220509078750507884956996801176232021188982406898678
-_GY=46316835694926478169428394003475163141307993866256225615783033011972563074944
+_GX=15112221349535400772501151409588531511454012693041857206046113283949847762202
+_GY=46316835694926478169428394003475163141307993866256225615783033603165251855960
 _d=37095705934669439343138083508754565189542113879843219016388785533085940283555
 
 def _ed_add(P,Q):
@@ -425,14 +425,15 @@ def _ed_add(P,Q):
 def _ed_dbl(P):
     X1,Y1,Z1,T1=P
     A=X1*X1%_P; B=Y1*Y1%_P; C=2*Z1*Z1%_P
-    H=A+B; E=H-(X1+Y1)*(X1+Y1)%_P; G=A-B; F=C+G
+    E=((X1+Y1)*(X1+Y1)-A-B)%_P
+    G=(B-A)%_P; F=(G-C)%_P; H=(-A-B)%_P
     return E*F%_P, G*H%_P, F*G%_P, E*H%_P
 
 _BASE=(_GX%_P, _GY%_P, 1, _GX*_GY%_P)
 _ID=(0,1,1,0)
 
 def _smul(P,k):
-    R=_ID; k=k%_Q
+    R=_ID
     while k:
         if k&1: R=_ed_add(R,P)
         P=_ed_dbl(P); k>>=1
@@ -458,7 +459,7 @@ def _decompress(b32):
 def _chk_eq(SB,RkA):
     return SB[0]*RkA[2]%_P==RkA[0]*SB[2]%_P and SB[1]*RkA[2]%_P==RkA[1]*SB[2]%_P
 
-# -- Monocypher EdDSA (Blake2b) ------------------------------------------------
+# ── Monocypher EdDSA (Blake2b) ────────────────────────────────────────────────
 
 def _bh(*parts):
     h=hashlib.blake2b(digest_size=64)
@@ -471,7 +472,7 @@ def _trim(s):
 
 def _eddsa_kp(seed):
     h=_bh(seed); a=_trim(h[:32]); pk=_compress(_smul(_BASE,a))
-    return h[:32]+pk, pk
+    return seed[:32]+pk, pk
 
 def _eddsa_sign(sk64,msg):
     h=_bh(sk64[:32]); a=_trim(h[:32]); pk=sk64[32:64]
@@ -529,7 +530,7 @@ def do_crypto_eddsa_check_equation():
     rv=0 if _chk_eq(_smul(_BASE,S),_ed_add(Rp,_smul(Ap,k))) else 0xff
     sys.stdout.write(f"{rv:02x}:\n")
 
-# -- Ed25519 (standard, SHA-512) -----------------------------------------------
+# ── Ed25519 (standard, SHA-512) ───────────────────────────────────────────────
 
 def _sh(*parts):
     h=hashlib.sha512()
@@ -576,7 +577,7 @@ def do_crypto_ed25519_check():
     sig=read_hex(); pk=read_hex(); msg=read_hex()
     sys.stdout.write(f"{_ed25519_chk(sig,pk,msg):02x}:\n")
 
-_ED25519_PH_PREFIX=b'SigEd25519 no Ed25519 collisions\x01'
+_ED25519_PH_PREFIX=b'SigEd25519 no Ed25519 collisions\x01\x00'
 
 def do_crypto_ed25519_ph_sign():
     sk=read_hex(); pk=read_hex(); hv=read_hex()
@@ -586,93 +587,92 @@ def do_crypto_ed25519_ph_check():
     sig=read_hex(); pk=read_hex(); hv=read_hex()
     sys.stdout.write(f"{_ed25519_chk(sig,pk,hv,_ED25519_PH_PREFIX):02x}:\n")
 
-# -- Elligator 2 ---------------------------------------------------------------
+# ── Elligator 2 ───────────────────────────────────────────────────────────────
 
 _A25519=486662
+_SQRT_M1=pow(2,(_P-1)//4,_P)
 
-def _ell_map(r):
-    """Elligator 2: map field element r to Curve25519 u-coordinate."""
-    A=_A25519
-    v=(2*r*r+1)%_P; vi=_finv(v)
-    x1=(-A*vi)%_P
-    gx1=(x1**3+A*x1**2+x1)%_P
-    e=pow(gx1,(_P-1)//2,_P)
-    if e==1 or gx1==0: return x1
-    return (-x1-A)%_P
+def _invsqrt(x):
+    x=x%_P
+    if x==0: return True, 0
+    t0=pow(x,(_P-5)//8,_P)
+    quartic=(t0*t0%_P*x)%_P
+    p1=(quartic==1); m1=(quartic==_P-1); ms=(quartic==(_P-_SQRT_M1)%_P)
+    if m1 or ms: isr=(t0*_SQRT_M1)%_P
+    else: isr=t0
+    return bool(p1 or m1), isr
 
 def do_crypto_elligator_map():
     hid=read_hex(); b=bytearray(hid[:32]); b[31]&=0x3f
     r=int.from_bytes(b,'little')
-    u=_ell_map(r); print_hex(u.to_bytes(32,'little'))
+    v=(1+2*r*r)%_P; vi=_finv(v)
+    u=(-_A25519*vi)%_P
+    rhs=(u*u*u + _A25519*u*u + u)%_P
+    is_sq, _ = _invsqrt(rhs)
+    if not is_sq:
+        u=(-u-_A25519)%_P
+    print_hex(u.to_bytes(32,'little'))
 
 def do_crypto_elligator_rev():
     pt=read_hex(); tl=read_line(); tweak=int(tl,16) if tl else 0
-    A=_A25519; u=int.from_bytes(pt[:32],'little')
-    ok=False
-    for xu in [u,(-u-A)%_P]:
-        if xu==0: continue
-        rhs=(-A*_finv(xu)-1)%_P; rhs=rhs*_finv(2)%_P
-        e=pow(rhs,(_P-1)//2,_P)
-        if e==0 or e==1:
-            r=_fsqrt(rhs)%_P
-            if r*r%_P!=rhs%_P: continue
-            if tweak&1: r=(-r)%_P
-            rb=bytearray(r.to_bytes(32,'little'))
-            rb[31]=(rb[31]&0x3f)|((tweak&0xc0))
-            print_hex(bytes(rb)); sys.stdout.write("00:\n"); ok=True; break
-    if not ok: sys.stdout.write("ff:\n")
+    b=bytearray(pt[:32]); b[31]&=0x7f
+    u=int.from_bytes(b,'little')%_P
+    t2=(u+_A25519)%_P; t3=(-2*u*t2)%_P
+    is_sq, isr = _invsqrt(t3)
+    if not is_sq:
+        sys.stdout.write("ff:\n")
+        return
+    t1=t2 if (tweak&1) else u
+    t3=(t1*isr)%_P; t1=(2*t3)%_P; t2=(-t3)%_P
+    if t1&1: t3=t2
+    hidden=bytearray(t3.to_bytes(32,'little'))
+    hidden[31]|=(tweak&0xc0)
+    print_hex(bytes(hidden))
+    sys.stdout.write("00:\n")
 
 def do_crypto_elligator_key_pair():
     seed=read_hex()
     buf=bytearray(64)
     buf[32:64]=seed[:32]
-    A=_A25519
     while True:
-        # buf[:64] = chacha20_djb(zero_64, key=buf[32:64], nonce=zero_8, counter=0)
         out64, _ = chacha20_djb(bytes(64), buf[32:64], bytes(8), 0)
         buf[:64] = out64
-        # pk = x25519_dirty_fast(sk=buf[:32])
         sk_b = bytearray(buf[:32])
         sk_b[0] &= 248; sk_b[31] &= 127; sk_b[31] |= 64
         k = int.from_bytes(sk_b, 'little')
         u = _ladder(_BU, k)
 
-        # test elligator_rev(hidden_out, pk=u, tweak=buf[32])
         tweak = buf[32]
-        found = False
-        hidden_out = None
-        for xu in [u, (-u-A)%_P]:
-            if xu == 0: continue
-            rhs = (-A * _finv(xu) - 1) % _P; rhs = (rhs * _finv(2)) % _P
-            e = pow(rhs, (_P-1)//2, _P)
-            if e == 0 or e == 1:
-                r = _fsqrt(rhs) % _P
-                if r * r % _P != rhs % _P: continue
-                if tweak & 1: r = (-r) % _P
-                rb = bytearray(r.to_bytes(32, 'little'))
-                rb[31] = (rb[31] & 0x3f) | (tweak & 0xc0)
-                hidden_out = bytes(rb)
-                found = True
-                break
-        if found:
-            print_hex(hidden_out)
+        b = bytearray(u.to_bytes(32, 'little')); b[31] &= 0x7f
+        u_val = int.from_bytes(b, 'little') % _P
+        t2 = (u_val + _A25519) % _P
+        t3 = (-2 * u_val * t2) % _P
+        is_sq, isr = _invsqrt(t3)
+        if is_sq:
+            t1 = t2 if (tweak & 1) else u_val
+            t3 = (t1 * isr) % _P; t1_check = (2 * t3) % _P; t2_neg = (-t3) % _P
+            if t1_check & 1: t3 = t2_neg
+            hidden = bytearray(t3.to_bytes(32, 'little'))
+            hidden[31] |= (tweak & 0xc0)
+            print_hex(bytes(hidden))
             print_hex(bytes(buf[:32]))
             break
 
-# -- Curve conversions ---------------------------------------------------------
+# ── Curve conversions ─────────────────────────────────────────────────────────
 
 def do_crypto_eddsa_to_x25519():
     ep=read_hex(); b=bytearray(ep[:32]); b[31]&=0x7f
-    y=int.from_bytes(b,'little')
+    y=int.from_bytes(b,'little')%_P
     u=(1+y)*_finv((1-y)%_P)%_P
     print_hex(u.to_bytes(32,'little'))
 
 def do_crypto_x25519_to_eddsa():
-    xp=read_hex(); u=int.from_bytes(xp[:32],'little')
-    y=(u-1)*_finv(u+1)%_P
+    xp=read_hex(); b=bytearray(xp[:32]); b[31]&=0x7f
+    u=int.from_bytes(b,'little')%_P
+    y=(u-1)*_finv((u+1)%_P)%_P
     print_hex(y.to_bytes(32,'little'))
 
-# -- Dispatch ------------------------------------------------------------------
+# ── Dispatch ──────────────────────────────────────────────────────────────────
 
 DISPATCH={
     "crypto_verify16":             do_crypto_verify16,
