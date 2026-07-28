@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+mkdir -p "$SCRIPT_DIR/classes"
+if [ ! -d "$SCRIPT_DIR/classes/com/kilo" ]; then
+    javac --release 21 -d "$SCRIPT_DIR/classes" "$SCRIPT_DIR/src/main/java/com/kilo"/*.java
+fi
+java -cp "$SCRIPT_DIR/classes" com.kilo.Main "$@"
